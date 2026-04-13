@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Dashboard | EASYDINE</title>
+    <style>
+        :root { --sidebar-bg: #002244; --main-bg: #f4f7f6; --accent: #ffcc00; --danger: #ff4444; --info: #3498db; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; height: 100vh; background: var(--main-bg); }
+
+        .brand { text-align: center !important; padding: 40px 10px !important; border-bottom: 1px solid rgba(255,255,255,0.1) !important; display: block !important; }
+        .brand img { width: 180px !important; height: 180px !important; border-radius: 50% !important; border: 4px solid var(--accent) !important; background: #001a33 !important; margin-bottom: 15px !important; object-fit: cover !important; display: inline-block !important; box-shadow: 0 0 25px rgba(255, 204, 0, 0.4) !important; }
+        .brand h2 { font-size: 1.5rem !important; color: var(--accent) !important; margin: 0 !important; }
+
+        .sidebar { width: 320px; background: var(--sidebar-bg); color: white; display: flex; flex-direction: column; box-shadow: 4px 0 10px rgba(0,0,0,0.2); z-index: 10; }
+        .nav-links { list-style: none; padding: 20px; flex-grow: 1; margin: 0; }
+        .nav-links li { padding: 15px; margin-bottom: 8px; border-radius: 10px; cursor: pointer; transition: 0.3s; font-weight: bold; }
+        .nav-links li:hover, .nav-links li.active { background: rgba(255,255,255,0.1); color: var(--accent); }
+        .logout-item:hover { color: var(--danger) !important; background: rgba(255, 68, 68, 0.1) !important; }
+
+        .main-content { flex-grow: 1; padding: 40px; overflow-y: auto; }
+        .dashboard-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .card-panel { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); margin-bottom: 30px; }
+
+        input, select, button { padding: 12px; margin: 5px 0; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; }
+        .btn-primary { background: var(--sidebar-bg); color: white; border: none; cursor: pointer; font-weight: bold; height: 43px; }
+        .btn-primary:hover { background: #003366; }
+        
+        .list-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid #eee; transition: 0.2s; }
+        .list-item:hover { background: #fdfdfd; }
+        .status-badge { padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; margin-left: 10px; }
+        .visible { background: #e8f5e9; color: #2e7d32; }
+        .hidden { background: #ffebee; color: #c62828; }
+        .stock-badge { background: #fdf2e9; color: #e67e22; }
+        
+        .btn-group button { margin-left: 5px; font-weight: bold; transition: 0.2s; cursor: pointer; }
+        .btn-group button:hover { transform: scale(1.05); }
+
+        /* MODALS */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center; }
+        .modal-box { background: white; padding: 30px; border-radius: 15px; width: 90%; max-width: 400px; text-align: center; }
+        .modal-box input { width: 100%; }
+        .modal-btns { display: flex; gap: 15px; margin-top: 20px; }
+        .cancel-btn { flex: 1; padding: 12px; background: #eee; color: #333; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .confirm-btn { flex: 1; padding: 12px; background: var(--danger); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .save-btn { flex: 1; padding: 12px; background: #2ecc71; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+
+        #toast { visibility: hidden; min-width: 280px; background-color: #333; color: #fff; text-align: center; border-radius: 30px; padding: 16px 24px; position: fixed; z-index: 1200; left: 50%; bottom: 30px; transform: translateX(-50%); box-shadow: 0 5px 20px rgba(0,0,0,0.3); font-size: 0.95rem; font-weight: bold; }
+        #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
+        @keyframes fadein { from { bottom: 0; opacity: 0; } to { bottom: 30px; opacity: 1; } }
+        @keyframes fadeout { from { bottom: 30px; opacity: 1; } to { bottom: 0; opacity: 0; } }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="brand">
+            <img src="EASYDINE.jpeg" alt="Logo">
+            <h2>EASYDINE ADMIN</h2>
+        </div>
+        <ul class="nav-links">
+            <li id="tab-menu" class="active" onclick="switchTab('menu')">🍽️ Manage Menu</li>
+            <li id="tab-customers" onclick="switchTab('customers')">👥 Customers Data</li>
+            <li onclick="window.location.href='/'">🔙 Back to Site</li>
+            <li class="logout-item" onclick="logoutAdmin()">🚀 Logout</li>
+        </ul>
+    </div>
+
+    <div class="main-content">
+        
+        <div id="section-menu">
+            <div class="dashboard-header">
+                <h1>Menu Management</h1>
+            </div>
+
+            <div class="card-panel">
+                <h3>Add New Item</h3>
+                <div style="display: flex; flex-wrap: wrap; gap: 15px; align-items: end;">
+                    <div style="flex: 2; min-width: 200px;">Name: <input type="text" id="itemName" style="width:100%"></div>
+                    <div style="flex: 1; min-width: 150px;">
+                        Category: 
+                        <select id="category" style="width:100%" onchange="handleCategoryChange()">
+                            <option>Appetizer</option><option>Main Course</option><option>Dessert</option><option>Beverage</option><option>Bread</option><option value="Custom">Custom...</option>
+                        </select>
+                        <input type="text" id="customCategory" style="width:100%; display:none; margin-top:5px;" placeholder="Custom category...">
+                    </div>
+                    <div style="flex: 1; min-width: 100px;">Price (₹): <input type="number" id="price" style="width:100%"></div>
+                    <button class="btn-primary" style="margin-bottom: 5px;" onclick="addDish()">+ Add Dish</button>
+                </div>
+            </div>
+
+            <div class="card-panel">
+                <h3>Current Menu Status</h3>
+                <div id="listContents">Loading your menu...</div>
+            </div>
+        </div>
+
+        <div id="section-customers" style="display: none;">
+            <div class="dashboard-header">
+                <h1>Customer Directory</h1>
+                <p>Total Registered: <strong id="total-customers-count" style="color: var(--sidebar-bg); font-size: 1.2rem;">0</strong></p>
+            </div>
+            <div class="card-panel">
+                <h3>Customer List & Passwords</h3>
+                <div id="customerList">Loading customers...</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="editModal" class="modal-overlay">
+        <div class="modal-box">
+            <h2 style="margin-top:0; color:var(--primary);">Edit Dish</h2>
+            <div style="text-align: left; margin-bottom: 15px;"><label style="font-weight:bold;">Dish Name:</label><input type="text" id="editName"></div>
+            <div style="text-align: left; margin-bottom: 15px;"><label style="font-weight:bold;">Category:</label><input type="text" id="editCategory"></div>
+            <div style="text-align: left; margin-bottom: 15px;"><label style="font-weight:bold;">Price (₹):</label><input type="number" id="editPrice" onkeydown="if(event.key === 'Enter') submitEdit()"></div>
+            <div class="modal-btns">
+                <button class="cancel-btn" onclick="closeEditModal()">Cancel</button>
+                <button class="save-btn" onclick="submitEdit()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="editCustomerModal" class="modal-overlay">
+        <div class="modal-box">
+            <h2 style="margin-top:0; color:var(--primary);">Edit Customer Details</h2>
+            <p style="color: var(--text-light); font-size: 0.9rem;">You can update their name, number, or reset their password here.</p>
+            <div style="text-align: left; margin-bottom: 15px;"><label style="font-weight:bold;">Name:</label><input type="text" id="editCustName" onkeydown="if(event.key === 'Enter') submitEditCustomer()"></div>
+            <div style="text-align: left; margin-bottom: 15px;"><label style="font-weight:bold;">Mobile:</label><input type="text" id="editCustMobile" onkeydown="if(event.key === 'Enter') submitEditCustomer()"></div>
+            <div style="text-align: left; margin-bottom: 15px;"><label style="font-weight:bold;">Password:</label><input type="text" id="editCustPass" onkeydown="if(event.key === 'Enter') submitEditCustomer()"></div>
+            <div class="modal-btns">
+                <button class="cancel-btn" onclick="document.getElementById('editCustomerModal').style.display='none'">Cancel</button>
+                <button class="save-btn" onclick="submitEditCustomer()">Save Details</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="deleteModal" class="modal-overlay">
+        <div class="modal-box">
+            <h2 style="margin-top:0; color:var(--primary);">Delete Dish</h2>
+            <p>Are you sure you want to permanently delete <strong id="deleteItemName"></strong>?</p>
+            <div class="modal-btns">
+                <button class="cancel-btn" onclick="closeDeleteModal()">Cancel</button>
+                <button class="confirm-btn" onclick="confirmDelete()">Confirm Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="adminOrderModal" class="modal-overlay">
+        <div class="modal-box" style="max-height: 85vh; overflow-y: auto; width: 95%; max-width: 500px;">
+            <h2 style="color: var(--primary); margin-top: 0;">Orders: <span id="adminOrderCustomerName"></span></h2>
+            <div id="adminOrderList" style="margin-top: 20px; margin-bottom: 20px;"></div>
+            <button class="cancel-btn" style="width: 100%;" onclick="document.getElementById('adminOrderModal').style.display='none'">Close</button>
+        </div>
+    </div>
+
+    <div id="toast">Message</div>
+
+    <script>
+        window.onload = function() {
+            if (sessionStorage.getItem("isAdmin") !== "true") { window.location.href = "/login"; }
+            loadAdminMenu();
+        };
+
+        function logoutAdmin() { sessionStorage.removeItem("isAdmin"); window.location.href = "/login"; }
+
+        function showAdminToast(msg) {
+            const t = document.getElementById("toast"); t.innerText = msg; t.className = "show";
+            setTimeout(() => t.className = "", 3000);
+        }
+
+        function switchTab(tab) {
+            document.getElementById('tab-menu').classList.remove('active');
+            document.getElementById('tab-customers').classList.remove('active');
+            document.getElementById('tab-' + tab).classList.add('active');
+
+            if (tab === 'menu') {
+                document.getElementById('section-menu').style.display = 'block';
+                document.getElementById('section-customers').style.display = 'none';
+                loadAdminMenu();
+            } else {
+                document.getElementById('section-menu').style.display = 'none';
+                document.getElementById('section-customers').style.display = 'block';
+                loadCustomers();
+            }
+        }
+
+        let currentEditCustomerId = null;
+
+        function loadCustomers() {
+            fetch('/admin/customers')
+            .then(res => res.json())
+            .then(data => {
+                const list = document.getElementById('customerList');
+                list.innerHTML = '';
+                
+                if (data.error) {
+                    showAdminToast("Database Error: " + data.error);
+                    return;
+                }
+
+                document.getElementById('total-customers-count').innerText = data.length;
+                
+                data.forEach(c => {
+                    const safeName = (c.username || 'Unknown').replace(/'/g, "\\'");
+                    const safeMobile = (c.mobile || '').replace(/'/g, "\\'");
+                    const safePass = (c.password || '').replace(/'/g, "\\'");
+
+                    list.innerHTML += `
+                        <div class="list-item">
+                            <div style="flex-grow: 1;">
+                                <span style="font-size: 1.1rem; color: #002244;"><strong>${c.username}</strong></span>
+                                <span style="color: #888; font-size: 0.9rem; margin-left: 5px;">(Mobile: ${c.mobile})</span>
+                                <div style="font-size: 0.9rem; color: #444; margin-top: 8px; background: #f9f9f9; padding: 10px; border-radius: 5px; display: inline-block;">
+                                    Total Orders: <strong style="color: #2ecc71;">${c.total_orders}</strong> &nbsp;|&nbsp; 
+                                    Total Spent: <strong style="color: #2ecc71;">₹${Number(c.total_spent).toFixed(2)}</strong>
+                                </div>
+                            </div>
+                            <div class="btn-group">
+                                <button onclick="viewCustomerOrders(${c.customer_id}, '${safeName}')" style="background:#27ae60;color:white;border:none;padding:8px 15px;border-radius:5px;">📦 View Orders</button>
+                                <button onclick="openEditCustomerModal(${c.customer_id}, '${safeName}', '${safeMobile}', '${safePass}')" style="background:#3498db;color:white;border:none;padding:8px 15px;border-radius:5px;">✏️ Edit Details</button>
+                            </div>
+                        </div>
+                    `;
+                });
+            })
+            .catch(err => {
+                console.error(err);
+                showAdminToast("Error rendering customers. Check console.");
+            });
+        }
+
+        // --- View Specific Customer Orders ---
+        function viewCustomerOrders(customerId, customerName) {
+            document.getElementById('adminOrderCustomerName').innerText = customerName;
+            
+            fetch('/customer/orders/' + customerId)
+            .then(res => res.json())
+            .then(data => {
+                const list = document.getElementById('adminOrderList');
+                list.innerHTML = '';
+                if(data.length === 0) {
+                    list.innerHTML = '<p style="color:#888;">No past orders found for this user.</p>';
+                } else {
+                    data.forEach(order => {
+                        const orderDate = order.order_date ? new Date(order.order_date).toLocaleString() : "Recently";
+                        
+                        const itemCounts = {};
+                        order.items.forEach(i => {
+                            if(!itemCounts[i.name]) itemCounts[i.name] = { count: 0, price: i.price };
+                            itemCounts[i.name].count++;
+                        });
+                        
+                        let itemsHtml = '<ul style="margin: 8px 0 10px 15px; padding: 0; font-size: 0.9rem; color: #555; text-align: left;">';
+                        for (const [name, details] of Object.entries(itemCounts)) {
+                            itemsHtml += `<li><b>${details.count}x</b> ${name} - ₹${(details.price * details.count).toFixed(2)}</li>`;
+                        }
+                        if (order.items.length === 0) itemsHtml += `<li><i>Details unavailable</i></li>`;
+                        itemsHtml += '</ul>';
+
+                        list.innerHTML += `<div style="border-bottom:1px solid #eee; padding:15px 0; text-align:left;">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <span style="font-weight:bold; color:var(--primary); font-size: 1.1rem;">Order #${order.order_id}</span>
+                                <span style="color:var(--success); font-weight:bold; font-size: 1.1rem;">₹${order.total_amount}</span>
+                            </div>
+                            <div style="font-size: 0.8rem; color:#888; margin-bottom: 5px;">${orderDate}</div>
+                            ${itemsHtml}
+                        </div>`;
+                    });
+                }
+                document.getElementById('adminOrderModal').style.display = 'flex';
+            });
+        }
+
+
+        function openEditCustomerModal(id, name, mobile, pass) {
+            currentEditCustomerId = id;
+            document.getElementById('editCustName').value = name;
+            document.getElementById('editCustMobile').value = mobile;
+            document.getElementById('editCustPass').value = pass;
+            document.getElementById('editCustomerModal').style.display = 'flex';
+        }
+
+        function submitEditCustomer() {
+            if (!currentEditCustomerId) return;
+            const data = {
+                customer_id: currentEditCustomerId,
+                username: document.getElementById('editCustName').value.trim(),
+                mobile: document.getElementById('editCustMobile').value.trim(),
+                password: document.getElementById('editCustPass').value.trim()
+            };
+
+            if(!data.username || !data.mobile || !data.password) return showAdminToast("All fields required!");
+
+            fetch('/admin/edit-customer', { 
+                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) 
+            })
+            .then(res => res.json())
+            .then(resData => {
+                if(resData.error) { showAdminToast(resData.error); }
+                else {
+                    document.getElementById('editCustomerModal').style.display = 'none';
+                    showAdminToast("Customer details updated successfully!");
+                    loadCustomers();
+                }
+            });
+        }
+
+        function handleCategoryChange() {
+            const select = document.getElementById('category');
+            const customInput = document.getElementById('customCategory');
+            if (select.value === 'Custom') { customInput.style.display = 'block'; customInput.focus(); } 
+            else { customInput.style.display = 'none'; }
+        }
+
+        function addDish() {
+            let catValue = document.getElementById('category').value;
+            if (catValue === 'Custom') catValue = document.getElementById('customCategory').value.trim();
+            const data = { item_name: document.getElementById('itemName').value, category: catValue, price: document.getElementById('price').value };
+            if(!data.item_name || !data.price) return showAdminToast("⚠️ Please fill in all fields!");
+
+            fetch('/add-item', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) })
+            .then(res => { if (!res.ok) throw new Error("Database rejected the item."); return res.json(); })
+            .then(() => {
+                showAdminToast("✅ Dish added successfully!");
+                document.getElementById('itemName').value = ''; document.getElementById('price').value = '';
+                loadAdminMenu();
+            }).catch(err => { showAdminToast("❌ Error: " + err.message); });
+        }
+
+        function loadAdminMenu() {
+            fetch('/admin/all-items').then(res => res.json()).then(data => {
+                const list = document.getElementById('listContents');
+                list.innerHTML = '';
+                data.forEach(item => {
+                    const statusClass = item.is_active ? "visible" : "hidden";
+                    const inStock = item.in_stock !== 0; 
+                    const safeName = item.item_name.replace(/'/g, "\\'");
+                    
+                    list.innerHTML += `
+                        <div class="list-item">
+                            <div style="flex-grow: 1;">
+                                <span style="font-size: 1.1rem; color: #002244;"><strong>${item.item_name}</strong></span>
+                                <span style="color: #888; font-size: 0.9rem; margin-left: 5px;">(₹${item.price} - ${item.category})</span>
+                                <span class="status-badge ${statusClass}">${item.is_active ? 'Active' : 'Hidden'}</span>
+                                ${!inStock ? `<span class="status-badge stock-badge">Out of Stock</span>` : ''}
+                            </div>
+                            <div class="btn-group">
+                                <button onclick="openEditModal(${item.item_id}, '${safeName}', '${item.category}', ${item.price})" style="background:#3498db;color:white;border:none;padding:8px 15px;border-radius:5px;">✏️ Edit</button>
+                                <button onclick="toggleStock(${item.item_id}, ${inStock ? 1 : 0})" style="background:${inStock ? '#f39c12' : '#7f8c8d'};color:white;border:none;padding:8px 15px;border-radius:5px;">${inStock ? 'Mark Out of Stock' : 'Mark In Stock'}</button>
+                                <button onclick="toggleStatus(${item.item_id}, ${item.is_active})" style="background:${item.is_active ? '#ff4444' : '#2ecc71'};color:white;border:none;padding:8px 15px;border-radius:5px;">${item.is_active ? 'Hide' : 'Show'}</button>
+                                <button onclick="openDeleteModal(${item.item_id}, '${safeName}')" style="background:#c0392b;color:white;border:none;padding:8px 15px;border-radius:5px;">🗑️</button>
+                            </div>
+                        </div>
+                    `;
+                });
+            });
+        }
+
+        let currentEditId = null;
+        function openEditModal(id, name, category, price) { currentEditId = id; document.getElementById('editName').value = name; document.getElementById('editCategory').value = category; document.getElementById('editPrice').value = price; document.getElementById('editModal').style.display = 'flex'; }
+        function closeEditModal() { document.getElementById('editModal').style.display = 'none'; currentEditId = null; }
+        function submitEdit() {
+            if (!currentEditId) return;
+            const data = { item_id: currentEditId, item_name: document.getElementById('editName').value, category: document.getElementById('editCategory').value, price: document.getElementById('editPrice').value };
+            fetch('/edit-item', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }).then(() => { showAdminToast("Updated successfully!"); closeEditModal(); loadAdminMenu(); });
+        }
+
+        function toggleStatus(id, status) { fetch('/toggle-item', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ item_id: id, current_status: status }) }).then(() => loadAdminMenu()); }
+        function toggleStock(id, stockStatus) { fetch('/toggle-stock', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ item_id: id, current_stock: stockStatus }) }).then(() => loadAdminMenu()); }
+
+        let dishToDeleteId = null;
+        function openDeleteModal(id, name) { dishToDeleteId = id; document.getElementById('deleteItemName').innerText = name; document.getElementById('deleteModal').style.display = 'flex'; }
+        function closeDeleteModal() { document.getElementById('deleteModal').style.display = 'none'; dishToDeleteId = null; }
+        function confirmDelete() {
+            if(!dishToDeleteId) return;
+            fetch('/delete-item', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ item_id: dishToDeleteId }) })
+            .then(res => res.json())
+            .then(data => { 
+                closeDeleteModal(); 
+                if(data.error) showAdminToast("⚠️ " + data.error); 
+                else { showAdminToast("Deleted successfully!"); loadAdminMenu(); }
+            });
+        }
+    </script>
+</body>
+</html>

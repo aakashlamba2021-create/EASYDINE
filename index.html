@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>EASYDINE | Premium Dining</title>
+    <style>
+        :root { 
+            --primary: #002244; --accent: #ffcc00; --bg: #f4f7f6; 
+            --success: #2ecc71; --error: #e74c3c;
+        }
+        
+        body { 
+            font-family: 'Segoe UI', sans-serif; margin: 0; 
+            background: #f4f7f6;
+            padding-top: 70px; display: flex; flex-direction: column; min-height: 100vh; 
+            overflow-x: hidden;
+        }
+
+        /* === SUBTLE FLOATING BACKGROUND === */
+        .bg-particles { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; overflow: hidden; background: linear-gradient(135deg, #f4f7f6 0%, #dce4e1 100%); }
+        .particle { position: absolute; opacity: 0.12; animation: floatParticle 25s infinite linear; font-size: 1.8rem; pointer-events: none; }
+        @keyframes floatParticle {
+            0% { transform: translateY(110vh) rotate(0deg); }
+            100% { transform: translateY(-20vh) rotate(360deg); }
+        }
+
+        /* === NAVBAR === */
+        .navbar { 
+            background: var(--primary); display: flex; flex-direction: column; 
+            position: fixed; top: 0; left: 0; right: 0; z-index: 100; 
+            box-shadow: 0 2px 15px rgba(0,0,0,0.3); height: 55px; 
+            overflow: hidden; transition: height 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+        }
+        .navbar:hover { height: 130px; }
+        .nav-top { display: flex; justify-content: space-between; align-items: center; padding: 12px 40px; width: 100%; box-sizing: border-box; }
+        .nav-watermark { display: flex; justify-content: space-evenly; width: 100%; position: absolute; top: 50px; left: 0; z-index: 1; opacity: 0; transition: opacity 0.4s ease; filter: grayscale(100%) opacity(0.1); font-size: 3.5rem; user-select: none; pointer-events: none; }
+        .navbar:hover .nav-watermark { opacity: 1; }
+        
+        .nav-categories { display: flex; justify-content: center; gap: 15px; margin-top: 15px; opacity: 0; transform: translateY(-10px); transition: 0.3s ease; pointer-events: none; position: relative; z-index: 2; }
+        .navbar:hover .nav-categories { opacity: 1; transform: translateY(0); pointer-events: auto; }
+        .cat-chip { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); color: white; padding: 8px 20px; border-radius: 20px; cursor: pointer; font-weight: bold; transition: 0.2s; font-size: 0.9rem; }
+        .cat-chip:hover { background: var(--accent); color: var(--primary); border-color: var(--accent); }
+
+        .search-box { background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); padding: 8px 15px; border-radius: 20px; color: white; width: 250px; outline: none; transition: 0.3s; position: relative; z-index: 2; }
+        .search-box:focus { background: rgba(255, 255, 255, 0.2); width: 300px; }
+        
+        .nav-btns { display: flex; gap: 10px; position: relative; z-index: 2; }
+        .admin-link, .user-link { color: white; text-decoration: none; font-size: 0.85rem; padding: 8px 15px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.3); transition: 0.3s; cursor: pointer; font-weight: bold; }
+        .user-link { border-color: var(--accent); color: var(--accent); }
+        .admin-link:hover, .user-link:hover { background: var(--accent); color: var(--primary); border-color: var(--accent); }
+
+        /* === MENU GRID === */
+        .container { padding: 40px; max-width: 1200px; margin: 0 auto; flex-grow: 1; width: 100%; box-sizing: border-box;}
+        .header { margin-bottom: 30px; border-bottom: 3px solid var(--accent); display: inline-block; padding-bottom: 10px; color: var(--primary); font-size: 2.2rem;}
+        .menu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 25px; padding-bottom: 60px; }
+        
+        .item-card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); text-align: center; display: flex; flex-direction: column; justify-content: space-between; border: 1px solid transparent; transition: all 0.3s ease; }
+        .item-card:hover { transform: translateY(-5px); box-shadow: 0 12px 25px rgba(0,0,0,0.1); border-color: var(--accent); }
+        .item-card h3 { margin: 10px 0 5px 0; color: var(--primary); font-size: 1.3rem; }
+        .item-card .price { font-weight: bold; color: var(--success); font-size: 1.4rem; margin-bottom: 15px; }
+        
+        /* Skeletons */
+        .skeleton-card { background: rgba(255,255,255,0.6); padding: 20px; border-radius: 15px; height: 200px; }
+        .pulse { background: #eee; height: 20px; margin-bottom: 10px; border-radius: 4px; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { opacity: 0.8; } 50% { opacity: 0.4; } 100% { opacity: 0.8; } }
+
+        .btn-container { height: 45px; width: 100%; }
+        .add-btn { width: 100%; height: 100%; background: var(--primary); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s; font-size: 1rem; }
+        .add-btn:hover { background: #003366; }
+        .qty-control { display: flex; justify-content: space-between; align-items: center; background: white; border: 2px solid var(--primary); color: var(--primary); border-radius: 8px; height: 100%; overflow: hidden; }
+        .qty-btn { background: var(--primary); color: white; border: none; width: 40px; height: 100%; font-size: 1.2rem; cursor: pointer; font-weight: bold;}
+        .qty-text { font-weight: bold; font-size: 1.1rem; width: 35px; text-align: center; }
+
+        /* === MODALS === */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1100; justify-content: center; align-items: center; backdrop-filter: blur(4px); }
+        .modal-box { background: white; padding: 40px 30px; border-radius: 15px; width: 90%; max-width: 420px; box-shadow: 0 20px 60px rgba(0,0,0,0.5); text-align: center; }
+        .modal-box input { display: block; width: 100%; padding: 14px 15px; margin: 15px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 1rem; }
+        .modal-btn { width: 100%; padding: 15px; background: var(--primary); color: white; border: none; border-radius: 10px; font-weight: bold; font-size: 1.1rem; cursor: pointer; margin-top: 10px; transition: 0.2s; }
+        .modal-btn:hover { background: var(--accent); color: #000; }
+        .switch-auth { margin-top: 15px; font-size: 0.95rem; color: var(--text-light); text-align: center; cursor: pointer; transition: 0.2s; }
+
+        /* === SMART TOAST === */
+        #toast { visibility: hidden; min-width: 300px; text-align: center; border-radius: 8px; padding: 16px 24px; position: fixed; z-index: 1200; left: 50%; bottom: 30px; transform: translateX(-50%); box-shadow: 0 10px 30px rgba(0,0,0,0.3); font-size: 1rem; font-weight: bold; color: white; overflow: hidden;}
+        #toast.show { visibility: visible; animation: slideUpToast 0.4s ease forwards; }
+        #toast.success { background-color: var(--success); }
+        #toast.error { background-color: var(--error); }
+        .toast-bar { position: absolute; bottom: 0; left: 0; height: 4px; background: rgba(255,255,255,0.5); width: 100%; }
+        #toast.show .toast-bar { animation: toastTimer 3s linear forwards; }
+        @keyframes slideUpToast { from { bottom: -50px; opacity: 0; } to { bottom: 30px; opacity: 1; } }
+        @keyframes toastTimer { from { width: 100%; } to { width: 0%; } }
+
+        /* === FOOTER === */
+        .modern-footer { background: var(--primary); color: white; text-align: center; padding: 40px 20px 20px; margin-top: auto; position: relative; z-index: 5; }
+        .footer-content h3 { color: var(--accent); letter-spacing: 2px; margin-top: 0; }
+        .footer-content p { color: #aaa; font-size: 0.9rem; margin-bottom: 20px; }
+        .footer-links { color: #888; font-size: 0.85rem; }
+        .footer-links span { cursor: pointer; transition: 0.2s; margin: 0 10px; }
+        .footer-links span:hover { color: var(--accent); }
+        .footer-bottom { border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px; font-size: 0.8rem; color: #666; margin-top: 20px; }
+
+        /* Bottom Cart Bar */
+        .bottom-bar { position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 500px; background: var(--success); color: white; padding: 15px 25px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 10px 40px rgba(46, 204, 113, 0.4); transition: bottom 0.4s ease; z-index: 90; }
+        .bottom-bar.show { bottom: 20px; }
+        .go-cart-btn { background: white; color: var(--success); border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1rem;}
+        
+        /* === CHECKOUT PAGE (FIXED) === */
+        #checkoutPage { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f8f9fa; z-index: 200; overflow-y: auto; padding-top: 40px; padding-bottom: 80px; }
+        .checkout-container { max-width: 600px; margin: 0 auto; padding: 0 20px; }
+        .checkout-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-bottom: 2px solid var(--accent); padding-bottom: 15px; }
+        
+        /* Fix 1: Properly sized Back Button */
+        .back-btn { background: var(--primary); color: white; border: none; padding: 8px 16px; border-radius: 8px; font-size: 1rem; cursor: pointer; font-weight: bold; transition: 0.2s; width: auto; }
+        
+        .order-card, .bill-details { background: white; border-radius: 12px; padding: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); margin-bottom: 20px; border: 1px solid #eee; }
+        .checkout-item { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px dashed #eee; list-style: none; }
+        .bill-row { display: flex; justify-content: space-between; padding: 8px 0; color: var(--text-light); }
+        .checkout-total { display: flex; justify-content: space-between; font-size: 1.6rem; font-weight: bold; color: var(--primary); border-top: 2px dashed #ddd; padding-top: 20px; margin-top: 10px; }
+        
+        /* Fix 2: Constrained Place Order Button */
+        .place-order-btn { background: var(--success); color: white; width: 100%; max-width: 400px; margin: 20px auto 0 auto; display: block; padding: 15px; border: none; border-radius: 12px; font-weight: bold; font-size: 1.2rem; cursor: pointer; transition: 0.2s; }
+
+        /* Success Page */
+        #successPage { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 300; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+        .success-icon { font-size: 6rem; color: var(--success); margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+
+    <div class="bg-particles" id="particle-container"></div>
+
+    <nav class="navbar">
+        <div class="nav-top">
+            <div style="font-weight: bold; font-size: 1.4rem; letter-spacing: 2px; color: var(--accent);">EASYDINE</div>
+            <input type="text" id="searchInput" class="search-box" placeholder="Search menu..." onkeyup="filterMenu()">
+            <div class="nav-btns">
+                <span id="userBtn" class="user-link" onclick="handleUserAction()">Customer Login</span>
+                <a href="/login" class="admin-link">Admin Login</a>
+            </div>
+        </div>
+        <div class="nav-watermark"><span>🍽️</span><span>🍔</span><span>🍕</span><span>🥗</span><span>🍹</span><span>🍰</span></div>
+        <div class="nav-categories">
+            <button class="cat-chip" onclick="setCategory('')">All</button>
+            <button class="cat-chip" onclick="setCategory('Appetizer')">Appetizers</button>
+            <button class="cat-chip" onclick="setCategory('Main Course')">Mains</button>
+            <button class="cat-chip" onclick="setCategory('Dessert')">Desserts</button>
+            <button class="cat-chip" onclick="setCategory('Beverage')">Drinks</button>
+        </div>
+    </nav>
+
+    <div class="container" id="main-content">
+        <h1 class="header">🍽️ Explore Our Menu</h1>
+        <div id="menu-container" class="menu-grid">
+            <div class="skeleton-card"><div class="pulse" style="width:70%"></div><div class="pulse" style="width:40%"></div><div class="pulse" style="height:40px; margin-top:30px;"></div></div>
+            <div class="skeleton-card"><div class="pulse" style="width:70%"></div><div class="pulse" style="width:40%"></div><div class="pulse" style="height:40px; margin-top:30px;"></div></div>
+            <div class="skeleton-card"><div class="pulse" style="width:70%"></div><div class="pulse" style="width:40%"></div><div class="pulse" style="height:40px; margin-top:30px;"></div></div>
+        </div>
+    </div>
+
+    <div id="authModal" class="modal-overlay">
+        <div class="modal-box">
+            <h2 id="authTitle" style="color: var(--primary); margin-top: 0; margin-bottom: 10px;">Customer Login</h2>
+            <div id="signupFields" style="display: none;">
+                <input type="text" id="authUser" placeholder="Your Full Name" onkeydown="if(event.key === 'Enter') handleAuth()">
+            </div>
+            <input type="text" id="authMobile" placeholder="Mobile Number" onkeydown="if(event.key === 'Enter') handleAuth()">
+            <input type="password" id="authPass" placeholder="Password" onkeydown="if(event.key === 'Enter') handleAuth()">
+            <button class="modal-btn" onclick="handleAuth()">Continue</button>
+            <div id="forgotBtn" class="switch-auth" style="color: var(--error);" onclick="showToast('Contact Admin: 8619373760', 'error')">Forgot Password?</div>
+            <div id="authToggle" class="switch-auth" onclick="toggleAuthMode()">New here? Create an account</div>
+            <div class="switch-auth" onclick="document.getElementById('authModal').style.display='none'">Cancel</div>
+        </div>
+    </div>
+
+    <div id="userProfileModal" class="modal-overlay">
+        <div class="modal-box">
+            <h2 style="color: var(--primary); margin-top: 0; margin-bottom: 20px;">Welcome, <span id="profileName"></span>!</h2>
+            <button class="modal-btn" style="background: #3498db;" onclick="viewOrderHistory()">📦 View Detailed History</button>
+            <button class="modal-btn" style="background: var(--error); margin-top: 15px;" onclick="logoutUser()">🚪 Logout</button>
+            <div class="switch-auth" onclick="document.getElementById('userProfileModal').style.display='none'">Close</div>
+        </div>
+    </div>
+
+    <div id="orderHistoryModal" class="modal-overlay">
+        <div class="modal-box" style="max-height: 85vh; overflow-y: auto; width: 95%; max-width: 500px;">
+            <h2 style="color: var(--primary); margin-top: 0;">Your Order History</h2>
+            <div id="historyList" style="margin-top: 20px; margin-bottom: 20px;"></div>
+            <div class="switch-auth" onclick="document.getElementById('orderHistoryModal').style.display='none'">Close</div>
+        </div>
+    </div>
+
+    <footer class="modern-footer">
+        <div class="footer-content">
+            <h3>EASYDINE</h3>
+            <p>Premium dining elevated.</p>
+            <div class="footer-links">
+                <span onclick="showToast('Privacy Policy: Your data is safe.')">Privacy Policy</span> | 
+                <span onclick="showToast('Terms: Standard dining terms apply.')">Terms of Service</span> | 
+                <span onclick="showToast('Support: 8619373760')">Contact</span>
+            </div>
+        </div>
+        <div class="footer-bottom">&copy; 2026 EasyDine Premium. All rights reserved.</div>
+    </footer>
+
+    <div id="toast"><span id="toastMsg"></span><div class="toast-bar"></div></div>
+
+    <div id="bottomBar" class="bottom-bar">
+        <div style="font-size: 1.1rem; font-weight: bold;"><span id="cart-count">0</span> Items | ₹<span id="bar-total">0</span></div>
+        <button class="go-cart-btn" onclick="openCheckout()">Go to Cart ➔</button>
+    </div>
+
+    <div id="checkoutPage">
+        <div class="checkout-container">
+            <div class="checkout-header">
+                <h2 style="color: var(--primary); font-size: 2rem; margin: 0;">Review Your Order</h2>
+                <button class="back-btn" onclick="closeCheckout()">← Back</button>
+            </div>
+            <div class="order-card"><ul id="checkout-list" style="padding:0; margin:0;"></ul></div>
+            <div class="bill-details">
+                <h3>Bill Details</h3>
+                <div class="bill-row"><span>Item Total</span><span>₹<span id="bill-subtotal">0.00</span></span></div>
+                <div class="bill-row"><span>CGST (2.5%)</span><span>₹<span id="bill-cgst">0.00</span></span></div>
+                <div class="bill-row"><span>SGST (2.5%)</span><span>₹<span id="bill-sgst">0.00</span></span></div>
+                <div class="bill-row"><span>Service Charge (7%)</span><span>₹<span id="bill-service">0.00</span></span></div>
+                <div class="checkout-total"><span>Grand Total:</span><span>₹<span id="checkout-total-price">0.00</span></span></div>
+            </div>
+            <button class="place-order-btn" onclick="triggerConfirmModal()">Confirm Order</button>
+        </div>
+    </div>
+
+    <div id="customConfirmModal" class="modal-overlay">
+        <div class="modal-box">
+            <h2 style="color: var(--primary); margin-top: 0; margin-bottom: 20px;">Confirm Order</h2>
+            <p style="color: var(--text-light); margin-bottom: 10px;">Are you sure you want to place this order?</p>
+            <p style="font-size: 1.5rem; font-weight: bold; color: var(--primary);">Total: ₹<span id="modal-confirm-total">0.00</span></p>
+            <div style="display:flex; gap:10px; margin-top:20px;">
+                <button style="flex:1; padding:12px; border:none; border-radius:8px; cursor:pointer; background:#eee;" onclick="document.getElementById('customConfirmModal').style.display='none'">Cancel</button>
+                <button class="modal-btn" style="flex:1; margin-top:0;" onclick="executeOrder()">Proceed</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="successPage">
+        <div class="success-icon">✓</div>
+        <h1 style="margin: 0; font-size: 2.5rem; color: var(--primary);">Ordered!</h1>
+        <p style="font-size: 1.2rem; color: var(--text-light); margin-top: 10px;">Your food is being prepared.</p>
+        <div class="order-card" style="text-align: center; width: 300px; margin-top:20px;">
+            <h3 id="finalOrderId" style="margin-top: 0; color: var(--primary);">Order #---</h3>
+            <p style="font-size: 1.2rem; font-weight: bold; color: var(--primary);">Total Paid: ₹<span id="finalOrderTotal">0</span></p>
+        </div>
+        <button class="modal-btn" style="width:250px; background: white; color: var(--primary); border: 2px solid var(--primary);" onclick="downloadReceipt()">📄 Get Physical Receipt</button><br>
+        <button class="modal-btn" style="width:250px;" onclick="resetToMenu()">Order More</button>
+    </div>
+
+    <script>
+        let cart = []; 
+        let allMenuItems = [];
+        let currentDisplayedItems = [];
+        let currentUser = null; 
+        let isSignup = false;
+        let currentSubtotal = 0, currentCGST = 0, currentSGST = 0, currentServiceCharge = 0, currentGrandTotal = 0;
+
+        // Particles
+        function initParticles() {
+            const container = document.getElementById('particle-container');
+            const icons = ['🍔', '🍕', '🍹', '🥗', '🍰', '🍜', '🍗'];
+            for(let i=0; i<15; i++) {
+                const p = document.createElement('div');
+                p.className = 'particle';
+                p.innerText = icons[Math.floor(Math.random() * icons.length)];
+                p.style.left = Math.random() * 100 + 'vw';
+                p.style.animationDelay = Math.random() * 20 + 's';
+                container.appendChild(p);
+            }
+        }
+
+        // Logic
+        function loadMenu() { fetch('/menu').then(res => res.json()).then(data => { allMenuItems = data; displayItems(allMenuItems); }); }
+        function getQuantity(name) { const item = cart.find(i => i.item_name === name); return item ? item.qty : 0; }
+
+        function displayItems(items) {
+            currentDisplayedItems = items;
+            const container = document.getElementById('menu-container'); container.innerHTML = '';
+            items.forEach(item => {
+                const qty = getQuantity(item.item_name);
+                const safeName = item.item_name.replace(/'/g, "\\'");
+                const isOutOfStock = item.in_stock === 0;
+
+                let btnHTML = isOutOfStock 
+                    ? `<button class="add-btn" style="background:#eee;color:#999;cursor:not-allowed;" disabled>Out of Stock</button>`
+                    : qty > 0 
+                        ? `<div class="qty-control"><button class="qty-btn" onclick="updateQuantity('${safeName}', -1, ${item.price})">−</button><span class="qty-text">${qty}</span><button class="qty-btn" onclick="updateQuantity('${safeName}', 1, ${item.price})">+</button></div>`
+                        : `<button class="add-btn" onclick="updateQuantity('${safeName}', 1, ${item.price})">Add to Cart</button>`;
+                
+                container.innerHTML += `<div class="item-card" style="${isOutOfStock ? 'opacity:0.6;' : ''}">
+                    <div><h3>${item.item_name}</h3><p style="color:#888; font-size:0.8rem;">${item.category}</p><div class="price">₹${item.price}</div></div>
+                    <div class="btn-container">${btnHTML}</div></div>`;
+            });
+        }
+
+        function handleUserAction() { if (currentUser) { document.getElementById('profileName').innerText = currentUser.username; document.getElementById('userProfileModal').style.display = 'flex'; } else { document.getElementById('authModal').style.display = 'flex'; } }
+        function logoutUser() { currentUser = null; document.getElementById('userBtn').innerText = "Customer Login"; document.getElementById('userProfileModal').style.display = 'none'; showToast("Logged out successfully."); }
+
+        function viewOrderHistory() {
+            document.getElementById('userProfileModal').style.display = 'none';
+            fetch('/customer/orders/' + currentUser.customer_id).then(res => res.json()).then(data => {
+                const list = document.getElementById('historyList'); list.innerHTML = '';
+                if(data.length === 0) list.innerHTML = '<p style="color:#888;">No past orders found.</p>';
+                else {
+                    data.forEach(order => {
+                        const orderDate = order.order_date ? new Date(order.order_date).toLocaleString() : "Recently";
+                        const itemCounts = {};
+                        order.items.forEach(i => { if(!itemCounts[i.name]) itemCounts[i.name] = { count: 0, price: i.price }; itemCounts[i.name].count++; });
+                        let itemsHtml = '<ul style="margin: 8px 0 10px 15px; padding: 0; font-size: 0.9rem; color: #555; text-align: left;">';
+                        for (const [name, details] of Object.entries(itemCounts)) itemsHtml += `<li><b>${details.count}x</b> ${name} - ₹${(details.price * details.count).toFixed(2)}</li>`;
+                        if (order.items.length === 0) itemsHtml += `<li><i>Details unavailable</i></li>`;
+                        itemsHtml += '</ul>';
+                        list.innerHTML += `<div style="border-bottom:1px solid #eee; padding:15px 0; text-align:left;"><div style="display:flex; justify-content:space-between; align-items:center;"><span style="font-weight:bold; color:var(--primary); font-size: 1.1rem;">Order #${order.order_id}</span><span style="color:var(--success); font-weight:bold; font-size: 1.1rem;">₹${order.total_amount}</span></div><div style="font-size: 0.8rem; color:#888; margin-bottom: 5px;">${orderDate}</div>${itemsHtml}</div>`;
+                    });
+                }
+                document.getElementById('orderHistoryModal').style.display = 'flex';
+            });
+        }
+
+        function toggleAuthMode() { isSignup = !isSignup; document.getElementById('authTitle').innerText = isSignup ? "Create Account" : "Customer Login"; document.getElementById('signupFields').style.display = isSignup ? "block" : "none"; document.getElementById('authToggle').innerText = isSignup ? "Already have an account? Login" : "New here? Create an account"; }
+
+        function handleAuth() {
+            const mobile = document.getElementById('authMobile').value.trim(); const password = document.getElementById('authPass').value.trim(); const username = document.getElementById('authUser').value.trim();
+            if (!mobile || !password || (isSignup && !username)) return showToast("Please fill all required fields!", "error");
+            fetch(isSignup ? '/customer/signup' : '/customer/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(isSignup ? { username, mobile, password } : { mobile, password }) })
+            .then(async (res) => { const data = await res.json(); if (!res.ok || data.error) throw new Error(data.error || "Authentication failed!"); return data; })
+            .then(data => { currentUser = isSignup ? { customer_id: data.customer_id, username: data.username } : data.customer; document.getElementById('userBtn').innerText = "Hi, " + currentUser.username; document.getElementById('authModal').style.display = 'none'; showToast("Welcome, " + currentUser.username + "!"); document.getElementById('authUser').value = ''; document.getElementById('authMobile').value = ''; document.getElementById('authPass').value = ''; })
+            .catch(err => { showToast(err.message, "error"); });
+        }
+
+        function setCategory(cat) { document.getElementById('searchInput').value = cat; filterMenu(); }
+        function filterMenu() { const term = document.getElementById('searchInput').value.toLowerCase(); displayItems(allMenuItems.filter(item => item.item_name.toLowerCase().includes(term) || item.category.toLowerCase().includes(term))); }
+        function updateQuantity(name, change, price) {
+            const index = cart.findIndex(i => i.item_name === name);
+            if (index > -1) { cart[index].qty += change; if (cart[index].qty <= 0) cart.splice(index, 1); } 
+            else if (change > 0) { cart.push({ item_name: name, price: price, qty: 1 }); }
+            displayItems(currentDisplayedItems); updateCartData();
+        }
+
+        function updateCartData() {
+            currentSubtotal = 0; let totalItems = 0;
+            cart.forEach(item => { currentSubtotal += (item.price * item.qty); totalItems += item.qty; });
+            currentCGST = currentSubtotal * 0.025; currentSGST = currentSubtotal * 0.025; currentServiceCharge = currentSubtotal * 0.07;
+            currentGrandTotal = currentSubtotal + currentCGST + currentSGST + currentServiceCharge;
+            document.getElementById('cart-count').innerText = totalItems; document.getElementById('bar-total').innerText = currentSubtotal.toFixed(2);
+            if(cart.length > 0) document.getElementById('bottomBar').classList.add('show'); else { document.getElementById('bottomBar').classList.remove('show'); closeCheckout(); }
+        }
+
+        function openCheckout() {
+            const list = document.getElementById('checkout-list'); list.innerHTML = '';
+            cart.forEach(item => { list.innerHTML += `<li class="checkout-item"><span><b>${item.qty}x</b> ${item.item_name}</span><span>₹${(item.price * item.qty).toFixed(2)}</span></li>`; });
+            document.getElementById('bill-subtotal').innerText = currentSubtotal.toFixed(2); document.getElementById('bill-cgst').innerText = currentCGST.toFixed(2); document.getElementById('bill-sgst').innerText = currentSGST.toFixed(2); document.getElementById('bill-service').innerText = currentServiceCharge.toFixed(2); document.getElementById('checkout-total-price').innerText = currentGrandTotal.toFixed(2); document.getElementById('checkoutPage').style.display = 'block';
+        }
+
+        function closeCheckout() { document.getElementById('checkoutPage').style.display = 'none'; }
+        function triggerConfirmModal() { if (!currentUser) { showToast("Login required to place order!", "error"); document.getElementById('authModal').style.display = 'flex'; return; } document.getElementById('modal-confirm-total').innerText = currentGrandTotal.toFixed(2); document.getElementById('customConfirmModal').style.display = 'flex'; }
+
+        // Fix 3: Robust executeOrder with empty cart check
+        function executeOrder() {
+            document.getElementById('customConfirmModal').style.display = 'none'; 
+            if (cart.length === 0) {
+                showToast("Your cart is empty!", "error");
+                return;
+            }
+            
+            const expandedItems = []; 
+            cart.forEach(item => { for(let i=0; i<item.qty; i++) expandedItems.push({ item_name: item.item_name, price: item.price }); });
+            
+            fetch('/place-order', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ items: expandedItems, total: currentGrandTotal, customer_id: currentUser.customer_id }) })
+            .then(async res => { 
+                const data = await res.json(); 
+                if (!res.ok || !data.success) throw new Error(data.error || "Order Failed in DB!"); 
+                document.getElementById('finalOrderId').innerText = "Order #" + data.orderId; 
+                document.getElementById('finalOrderTotal').innerText = currentGrandTotal.toFixed(2); 
+                document.getElementById('successPage').style.display = 'flex'; 
+            })
+            .catch(err => { 
+                showToast("❌ " + err.message, "error"); 
+                console.error(err); 
+            });
+        }
+
+        function downloadReceipt() {
+            try {
+                const currentTime = new Date().toLocaleString();
+                let text = `=== EASYDINE PREMIUM BILL ===\nDate & Time: ${currentTime}\n`; if(currentUser) text += `Customer: ${currentUser.username}\n`; text += `\n`;
+                cart.forEach(item => text += `${item.qty}x ${item.item_name} .... Rs. ${(item.price * item.qty).toFixed(2)}\n`);
+                text += `\nSubtotal: Rs. ${currentSubtotal.toFixed(2)}\nCGST (2.5%): Rs. ${currentCGST.toFixed(2)}\nSGST (2.5%): Rs. ${currentSGST.toFixed(2)}\nService (7%): Rs. ${currentServiceCharge.toFixed(2)}\n--------------------------\nGRAND TOTAL: Rs. ${currentGrandTotal.toFixed(2)}\n--------------------------\nThank you for dining with us!`;
+                const blob = new Blob([text], { type: 'text/plain' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `EasyDine_Receipt.txt`; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+            } catch (e) { console.error("Receipt error:", e); }
+        }
+
+        function resetToMenu() { cart = []; updateCartData(); displayItems(allMenuItems); document.getElementById('successPage').style.display = 'none'; document.getElementById('checkoutPage').style.display = 'none'; }
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById("toast"); const text = document.getElementById("toastMsg");
+            toast.className = "show " + (type === 'error' ? 'error' : 'success');
+            text.innerText = message;
+            setTimeout(function(){ toast.className = ""; }, 3000);
+        }
+
+        window.onload = () => { loadMenu(); initParticles(); };
+    </script>
+</body>
+</html>

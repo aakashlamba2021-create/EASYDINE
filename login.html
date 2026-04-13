@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Login - RestroProject</title>
+    <style>
+        body { 
+            font-family: 'Segoe UI', sans-serif; 
+            background: linear-gradient(135deg, #003366 0%, #0056b3 100%); 
+            display: flex; align-items: center; justify-content: center; 
+            height: 100vh; margin: 0; 
+        }
+
+        .login-card { 
+            background: rgba(255, 255, 255, 0.95); 
+            padding: 40px; border-radius: 20px; 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4); 
+            width: 350px; text-align: center; 
+            transition: transform 0.3s ease;
+        }
+
+        /* This styles the sticker specifically inside the card */
+        .login-card img {
+            width: 250px;
+            height: auto;
+            margin-bottom: 10px;
+            object-fit: contain;
+        }
+
+        .login-card:hover { transform: translateY(-5px); }
+
+        h2 { color: #003366; margin-bottom: 25px; font-weight: 800; letter-spacing: 1px; }
+
+        input { 
+            width: 100%; padding: 14px; margin: 12px 0; 
+            border: 2px solid #eee; border-radius: 10px; 
+            box-sizing: border-box; outline: none; transition: border-color 0.3s;
+        }
+
+        input:focus { border-color: #003366; }
+
+        button { 
+            width: 100%; padding: 14px; background: #ffcc00; 
+            border: none; border-radius: 10px; font-weight: bold; 
+            color: #003366; cursor: pointer; margin-top: 15px; 
+            font-size: 1rem; transition: all 0.3s;
+        }
+
+        button:hover { 
+            background: #e6b800; 
+            transform: scale(1.02); 
+            box-shadow: 0 5px 15px rgba(255, 204, 0, 0.3); 
+        }
+
+        .error { color: #e74c3c; font-size: 0.9rem; margin-top: 15px; display: none; font-weight: bold; }
+
+        /* Shake animation for wrong password */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="login-card">
+        <img src="STICKER.png" alt="Admin Check">
+        <h2>RESTAURANT ADMIN</h2>
+        
+        <input type="text" id="userId" placeholder="User ID">
+        <input type="password" id="password" placeholder="Password" onkeypress="handleKeyPress(event)">
+        
+        <button onclick="checkLogin()">LOGIN</button>
+        <p id="err" class="error">❌ Invalid Credentials!</p>
+    </div>
+
+    <script>
+        // Fix for the Enter Key
+        function handleKeyPress(event) {
+            if (event.key === "Enter") {
+                checkLogin();
+            }
+        }
+
+        function checkLogin() {
+            const u = document.getElementById('userId').value;
+            const p = document.getElementById('password').value;
+
+            if (u === "admin" && p === "8619") {
+                sessionStorage.setItem("isAdmin", "true");
+                window.location.href = "/admin";
+            } else {
+                const err = document.getElementById('err');
+                err.style.display = "block";
+                
+                // Add a little shake effect if wrong
+                const card = document.querySelector('.login-card');
+                card.style.animation = "shake 0.4s";
+                setTimeout(() => { card.style.animation = ""; }, 400);
+            }
+        }
+    </script>
+</body>
+</html>
