@@ -11,10 +11,14 @@ app.use(express.static(__dirname));
 const port = 3000;
 
 const connection = mysql.createConnection({
-    host: 'localhost',
-    user: 'root',
-    password: '8619373760',
-    database: 'RestoManagement'
+    host: process.env.DB_HOST,
+    port: process.env.DB_PORT,       // Tells Node to use the Aiven port
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
+    ssl: {
+        rejectUnauthorized: false    // Tells Aiven to accept this encrypted connection
+    }
 });
 
 connection.connect((err) => {
