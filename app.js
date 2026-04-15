@@ -11,13 +11,13 @@ app.use(express.static(__dirname));
 const port = 3000;
 
 const connection = mysql.createConnection({
-    host: process.env.DB_HOST,
-    port: process.env.DB_PORT,       // Tells Node to use the Aiven port
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
+    host: 'mysql-2715073b-aakashlamba2021-6798.b.aivencloud.com', // Paste the Host from Aiven dashboard
+    port: 25813,
+    user: 'avnadmin',
+    password: 'AVNS_dTSGIPyYjjDRCsdWlKf', // Paste the Password from Aiven dashboard
+    database: 'defaultdb',
     ssl: {
-        rejectUnauthorized: false    // Tells Aiven to accept this encrypted connection
+        rejectUnauthorized: false
     }
 });
 
